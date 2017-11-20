@@ -11,9 +11,14 @@ to prevent us from opening the same file multiple times, and to make using the s
 file repetetively faster.
 
 ## Setup
-First you need to install the PyPI package, or clone this repository in your path.
+First you need to install the PyPI or conda-forge package, or clone this repository in your path.
 ```bash
 pip install h5pickle
+```
+
+```bash
+conda config --add channels conda-forge
+conda install h5pickle
 ```
 
 Then you can use h5pickle as a drop-in replacement for h5py.

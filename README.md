@@ -7,8 +7,8 @@ filesystems, and for reading files (SWMR should be fine too).
 ### Caching
 A Least-Recently-Used (LRU) cache is used to keep `h5pickle.File` objects in based
 on the arguments passed to that function. On unpickling that cache is first checked
-to prevent us from opening the same file multiple times, and to make using the same
-file repetetively faster.
+to prevent us from opening the same file multiple times, and to make using the
+same file repeatedly faster.
 
 ## Setup
 First you need to install the PyPI or conda-forge package, or clone this repository in your path.
@@ -26,12 +26,14 @@ Then you can use h5pickle as a drop-in replacement for h5py.
 import h5pickle as h5py
 ```
 
-Note that not all features of h5py are supported yet. Pull requests are very welcome.
+Note that not all features of h5py are supported yet. Pull requests are very
+welcome. Specifically writing files is problematic, as to do this properly from
+multiple processes needs MPI support.
 
 ## Usage
 ```python
 import pickle, h5pickle
-f = h5pickle.File('filename.h5', 'r')
+f = h5pickle.File('filename.h5', 'r', skip_cache=False) # skip_cache = True by default
 f2 = pickle.loads(pickle.dumps(f))
 f2 == f # True
 

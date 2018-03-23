@@ -24,8 +24,8 @@ pytoolz
 cachetools
 """
 
+import json
 import h5py
-from toolz.functoolz import memoize
 from cachetools import LRUCache
 
 class LRUFileCache(LRUCache):
@@ -85,6 +85,10 @@ class Group(PickleAbleH5PyObject, h5py.Group):
         return obj
 
 
+def arghash(*args, **kwargs):
+    hash(json.dumps(args) + json.dumps(kwargs, sort_keys=True))
+
+
 class File(h5py.File):
     """A subclass of h5py.File that implements a memoized cache and pickling.
     Use this if you are going to be creating h5py.Files of the same file often.
@@ -93,17 +97,30 @@ class File(h5py.File):
     which produces the arguments to supply to the __new__ method. This is required
     to allow for memoization of unpickled values.
     """
-    @memoize(cache=cache)
-    def __new__(cls, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        """We skip the init method, since it is called at object creation time
+        by __new__. This is necessary to have both pickling and caching."""
+        pass
+
+    def __new__(cls, *args, skip_cache=False, **kwargs):
         """Create a new File object with the h5open function, which memoizes
         the file creation. Test if it is still valid and otherwise create a new one.
         """
-        self = object.__new__(cls)
-        h5py.File.__init__(self, *args, **kwargs)
+        hsh = arghash(*args, **kwargs)
+        if skip_cache or hsh not in cache:
+            self = object.__new__(cls)
+            h5py.File.__init__(self, *args, **kwargs)
+            # Store args and kwargs for pickling
+            self.init_args = args
+            self.init_kwargs = kwargs
+            self.skip_cache = skip_cache
 
-        # Store args and kwargs for pickling
-        self.init_args = args
-        self.init_kwargs = kwargs
+            if not skip_cache:
+                cache[hsh] = self
+        else:
+            self = cache[hsh]
+
+        self.hsh = hsh
         return self
 
     def __getitem__(self, name):
@@ -117,11 +134,11 @@ class File(h5py.File):
         pass
 
     def __getnewargs_ex__(self):
-        return self.init_args, self.init_kwargs
+        return self.init_args, {**self.init_kwargs, 'skip_cache': self.skip_cache}
 
     def close(self):
         """Override the close function to remove the file also from the cache"""
         h5py.File.close(self)
         for key in list(cache.keys()):
-            if cache[key] == self:
+            if cache[key] == self.hsh:
                 del cache[key]

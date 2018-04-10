@@ -102,10 +102,11 @@ class File(h5py.File):
         by __new__. This is necessary to have both pickling and caching."""
         pass
 
-    def __new__(cls, *args, skip_cache=False, **kwargs):
+    def __new__(cls, *args, **kwargs):
         """Create a new File object with the h5open function, which memoizes
         the file creation. Test if it is still valid and otherwise create a new one.
         """
+        skip_cache = kwargs.pop('skip_cache', False)
         hsh = arghash(*args, **kwargs)
         if skip_cache or hsh not in cache:
             self = object.__new__(cls)
@@ -134,7 +135,9 @@ class File(h5py.File):
         pass
 
     def __getnewargs_ex__(self):
-        return self.init_args, {**self.init_kwargs, 'skip_cache': self.skip_cache}
+        kwargs = self.init_kwargs.copy()
+        kwargs['skip_cache'] = self.skip_cache
+        return self.init_args, kwargs
 
     def close(self):
         """Override the close function to remove the file also from the cache"""

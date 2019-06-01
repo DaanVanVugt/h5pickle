@@ -107,7 +107,6 @@ class File(h5py.File):
         """
         skip_cache = kwargs.pop('skip_cache', False)
         hsh = arghash(*args, **kwargs)
-        print(hsh, args, kwargs)
         if skip_cache or hsh not in cache:
             self = object.__new__(cls)
             h5py.File.__init__(self, *args, **kwargs)

@@ -20,7 +20,6 @@ cache.
 
 Dependencies:
 h5py
-pytoolz
 cachetools
 """
 
@@ -86,7 +85,7 @@ class Group(PickleAbleH5PyObject, h5py.Group):
 
 
 def arghash(*args, **kwargs):
-    hash(json.dumps(args) + json.dumps(kwargs, sort_keys=True))
+    return hash(json.dumps(args) + json.dumps(kwargs, sort_keys=True))
 
 
 class File(h5py.File):
@@ -108,6 +107,7 @@ class File(h5py.File):
         """
         skip_cache = kwargs.pop('skip_cache', False)
         hsh = arghash(*args, **kwargs)
+        print(hsh, args, kwargs)
         if skip_cache or hsh not in cache:
             self = object.__new__(cls)
             h5py.File.__init__(self, *args, **kwargs)

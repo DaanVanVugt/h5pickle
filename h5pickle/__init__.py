@@ -67,6 +67,11 @@ class PickleAbleH5PyObject(object):
     def __setstate__(self, state):
         """File is reopened by pickle. Create a dataset and steal its identity"""
         self.__init__(state['file'][state['name']].id)
+        self.file_info = state['file']
+
+    def __getnewargs__(self):
+        """Override the h5py getnewargs to skip its error message"""
+        return ()
 
 class Dataset(PickleAbleH5PyObject, h5py.Dataset):
     """Mix in our pickling class"""
@@ -91,7 +96,7 @@ def arghash(*args, **kwargs):
 class File(h5py.File):
     """A subclass of h5py.File that implements a memoized cache and pickling.
     Use this if you are going to be creating h5py.Files of the same file often.
-    
+
     Pickling is done not with __{get,set}state__ but with __getnewargs_ex__
     which produces the arguments to supply to the __new__ method. This is required
     to allow for memoization of unpickled values.

@@ -34,14 +34,23 @@ multiple processes needs MPI support.
 ```python
 import pickle, h5pickle
 f = h5pickle.File('filename.h5', 'r', skip_cache=False) # skip_cache = True by default
-f2 = pickle.loads(pickle.dumps(f))
+f2 = pickle.loads(pickle.dumps(f, protocol=pickle.HIGHEST_PROTOCOL))
 f2 == f # True
 
-g = pickle.loads(pickle.dumps(f['/group/'])) # works
-d = pickle.loads(pickle.dumps(f['/group/set'])) # works
+g = pickle.loads(pickle.dumps(f['/group/'], protocol=pickle.HIGHEST_PROTOCOL)) # works
+d = pickle.loads(pickle.dumps(f['/group/set'], protocol=pickle.HIGHEST_PROTOCOL)) # works
 ```
 
 _Be very careful using this with any file open flags other than 'r' in a parallel context_
+
+It is recommended to use at least protocol 2. Some features are known to work with lower protocols
+
+## Testing
+A few tests are available in the `tests/` folder. Run them with
+```bash
+pytest
+```
+
 
 ## References
 Inspired by

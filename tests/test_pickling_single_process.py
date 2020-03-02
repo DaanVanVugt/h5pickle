@@ -3,13 +3,14 @@ Test whether pickling hdf5 handles works in single_process mode
 """
 
 import unittest
-import h5pickle
-import h5py
+import tempfile
 import pickle
 import os
+import h5py
+import h5pickle
 
 class PicklingTest(unittest.TestCase):
-  file = 'test.h5'
+  file = tempfile.mkstemp(suffix='.h5')[1]
   def setUp(self):
     with h5py.File(self.file, 'w') as f:
       f['a'] = 1
@@ -18,7 +19,7 @@ class PicklingTest(unittest.TestCase):
     f = h5pickle.File(self.file, 'a', skip_cache=True)
     self.assertEqual(f['a'][()], 1, 'can read from file')
 
-    g = pickle.loads(pickle.dumps(f))
+    g = pickle.loads(pickle.dumps(f, protocol=pickle.HIGHEST_PROTOCOL))
 
     self.assertEqual(g['a'][()], 1, 'reading from dataset should give correct result')
     # Since cache is skipped I want 2 different handles
@@ -31,7 +32,7 @@ class PicklingTest(unittest.TestCase):
   def test_readonly(self):
     f = h5pickle.File(self.file, 'a', skip_cache=False)
 
-    g = pickle.loads(pickle.dumps(f))
+    g = pickle.loads(pickle.dumps(f, protocol=pickle.HIGHEST_PROTOCOL))
 
     # Due to the caching mechanism f and g should be the same
     self.assertEqual(id(f), id(g), 'pickling and unpickling should use cache')
@@ -48,13 +49,13 @@ class PicklingTest(unittest.TestCase):
 
 
 class PicklingWritableTest(unittest.TestCase):
-  file = 'test.h5'
+  file = tempfile.mkstemp(suffix='.h5')[1]
   def test_create_writable_file(self):
     f = h5pickle.File(self.file, 'w', skip_cache=True)
-    
+
     got_oserror = False
     try:
-      g = pickle.loads(pickle.dumps(f))
+      g = pickle.loads(pickle.dumps(f, protocol=pickle.HIGHEST_PROTOCOL))
       # We expect an error here, since we cannot open on multiple processes
     except OSError:
       got_oserror = True

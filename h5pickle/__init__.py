@@ -23,7 +23,6 @@ h5py
 cachetools
 """
 
-import json
 import h5py
 from cachetools import LRUCache
 
@@ -90,7 +89,7 @@ class Group(PickleAbleH5PyObject, h5py.Group):
 
 
 def arghash(*args, **kwargs):
-    return hash(json.dumps(args) + json.dumps(kwargs, sort_keys=True))
+    return hash((args, tuple(sorted(kwargs.items()))))
 
 
 class File(h5py.File):
